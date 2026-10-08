@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENGINE GROUP</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700;900&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#D41920;--red-dark:#A01018;--red-glow:#FF2A33;--dark:#0A0A0A;--dark2:#111;--dark3:#1A1A1A;--white:#FFF;--gray:#888;--gray-lt:#CCC}
+html{scroll-behavior:auto}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--dark);color:var(--white);overflow-x:hidden;cursor:none}
+.cursor-dot{position:fixed;width:8px;height:8px;background:var(--red);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:difference;transition:transform .15s}
+.cursor-ring{position:fixed;width:40px;height:40px;border:1.5px solid rgba(212,25,32,.5);border-radius:50%;pointer-events:none;z-index:9998;transition:transform .3s,border-color .3s}
+body:hover .cursor-ring{border-color:rgba(212,25,32,.7)}
+.grain{position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#three-canvas{position:fixed;inset:0;z-index:0}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 48px;height:64px;display:flex;align-items:center;justify-content:space-between;transition:background .4s,backdrop-filter .4s}
+.nav.scrolled{background:rgba(10,10,10,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.05)}
+.nav-logo{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;color:var(--white);text-decoration:none}
+.nav-logo span{color:var(--red)}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gray);text-decoration:none;transition:color .3s}
+.nav-links a:hover{color:var(--white)}
+.nav-cta{padding:10px 24px;background:var(--red)!important;color:var(--white)!important;transition:background .3s,transform .3s!important}
+.nav-cta:hover{background:var(--red-dark)!important;transform:translateY(-1px)}
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1}
+.hero-line{position:absolute;top:0;left:0;right:0;height:3px;background:var(--red);transform:scaleX(0);transform-origin:left}
+.hero-content{position:relative;text-align:center;padding:0 24px}
+.hero-overline{font-size:11px;font-weight:600;letter-spacing:6px;text-transform:uppercase;color:var(--red);margin-bottom:24px;opacity:0}
+.hero-title-wrap{position:relative;display:inline-block}
+.hero-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(80px,20vw,280px);font-weight:700;letter-spacing:clamp(8px,2vw,30px);line-height:.85;color:var(--white);text-transform:uppercase;opacity:0;position:relative}
+.hero-title::before,.hero-title::after{content:'ENGINE';position:absolute;top:0;left:0;width:100%;height:100%;opacity:0}
+.hero-title.glitch-active::before{opacity:.8;color:var(--red-glow);animation:glitch1 3s infinite;clip-path:polygon(0 0,100% 0,100% 33%,0 33%)}
+.hero-title.glitch-active::after{opacity:.8;color:cyan;animation:glitch2 3s infinite;clip-path:polygon(0 66%,100% 66%,100% 100%,0 100%)}
+@keyframes glitch1{0%,92%,100%{transform:translate(0)}93%{transform:translate(-5px,-2px)}96%{transform:translate(5px,2px)}99%{transform:translate(-3px,1px)}}
+@keyframes glitch2{0%,90%,100%{transform:translate(0)}91%{transform:translate(5px,3px)}94%{transform:translate(-5px,-1px)}97%{transform:translate(3px,-2px)}}
+.hero-subtitle{font-family:'Space Grotesk',sans-serif;font-size:clamp(12px,1.5vw,18px);font-weight:400;letter-spacing:8px;text-transform:uppercase;color:var(--gray);margin-top:16px;opacity:0}
+.hero-tagline{font-size:18px;font-weight:300;color:var(--gray-lt);margin-top:40px;letter-spacing:2px;opacity:0}
+.hero-cta-wrap{margin-top:48px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;opacity:0}
+.hero-btn{display:inline-block;font-size:13px;font-weight:700;letter-spacing:1px;padding:14px 40px;text-decoration:none;transition:all .3s}
+.hero-btn-primary{background:var(--red);color:var(--white)}
+.hero-btn-primary:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 10px 40px rgba(212,25,32,.4)}
+.hero-btn-outline{border:1px solid var(--white);color:var(--white);background:transparent}
+.hero-btn-outline:hover{background:rgba(255,255,255,.08)}
+.scroll-indicator{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0}
+.scroll-indicator span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gray)}
+.scroll-line{width:1px;height:40px;background:var(--gray);position:relative;overflow:hidden}
+.scroll-line::after{content:'';position:absolute;top:-100%;left:0;width:100%;height:100%;background:var(--red);animation:scrollPulse 2s infinite}
+@keyframes scrollPulse{0%{top:-100%}50%{top:100%}100%{top:100%}}
+.hero-glow{position:absolute;width:100%;height:100%;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(ellipse 60% 40% at center,rgba(212,25,32,.12),transparent 70%);pointer-events:none;animation:glowPulse 4s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}}
+.section{position:relative;z-index:1;padding:120px 48px}
+.section-inner{max-width:1200px;margin:0 auto}
+.section-label{font-size:11px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--red);margin-bottom:12px}
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:700;letter-spacing:-.5px;line-height:1.1;color:var(--white);margin-bottom:24px}
+.philosophy{background:var(--dark);border-top:1px solid rgba(255,255,255,.05)}
+.phil-grid{display:grid;grid-template-columns:1fr 2fr;gap:80px;align-items:start}
+.phil-quote{font-size:20px;font-weight:300;line-height:2;color:var(--gray-lt);border-left:2px solid var(--red);padding-left:32px}
+.phil-author{margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:16px}
+.phil-icon{width:48px;height:48px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px}
+.phil-name{font-size:14px;font-weight:500;color:var(--white)}
+.phil-role{font-size:12px;color:var(--gray);margin-top:2px}
+.services{background:var(--dark2)}
+.svc-list{margin-top:64px}
+.svc-item{display:grid;grid-template-columns:60px 1fr 2fr;gap:40px;padding:40px 0;border-top:1px solid rgba(255,255,255,.06);align-items:start;transition:background .3s}
+.svc-item:last-child{border-bottom:1px solid rgba(255,255,255,.06)}
+.svc-item:hover{background:rgba(212,25,32,.03)}
+.svc-num{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--gray);letter-spacing:1px}
+.svc-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--white);transition:color .3s}
+.svc-item:hover .svc-title{color:var(--red)}
+.svc-sub{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-top:4px}
+.svc-desc{font-size:15px;font-weight:300;line-height:1.8;color:var(--gray)}
+.svc-tags{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.svc-tag{font-size:11px;font-weight:500;padding:4px 12px;background:var(--dark3);color:var(--gray)}
+.stats{background:var(--dark);padding:100px 48px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.stats-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:48px;text-align:center}
+.stat-val{font-family:'Space Grotesk',sans-serif;font-size:clamp(48px,7vw,80px);font-weight:700;color:var(--white);line-height:1}
+.stat-val em{font-style:normal;color:var(--red)}
+.stat-lbl{font-size:13px;font-weight:500;color:var(--gray);margin-top:8px;letter-spacing:1px}
+.about{background:var(--dark2)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.about-img{position:relative;aspect-ratio:3/4;overflow:hidden;background:var(--dark3)}
+.about-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(20%);transition:filter .5s,transform .5s}
+.about-img:hover img{filter:grayscale(0%);transform:scale(1.03)}
+.about-img::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--red)}
+.about-row{display:grid;grid-template-columns:100px 1fr;gap:24px;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.about-key{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--gray)}
+.about-val{font-size:15px;font-weight:400;line-height:1.7;color:var(--gray-lt)}
+.cta{position:relative;padding:160px 48px;text-align:center;z-index:1;overflow:hidden}
+.cta-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 50%,rgba(212,25,32,.12),transparent 60%),var(--dark)}
+.cta::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--red)}
+.cta-content{position:relative;z-index:2}
+.cta-title{font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,4.5vw,56px);font-weight:700;line-height:1.15;margin-bottom:20px}
+.cta-desc{font-size:16px;font-weight:300;color:var(--gray);max-width:500px;margin:0 auto 40px;line-height:1.8}
+.cta-btn{display:inline-block;font-size:14px;font-weight:700;letter-spacing:1px;padding:16px 48px;background:var(--red);color:var(--white);text-decoration:none;transition:all .3s}
+.cta-btn:hover{background:var(--red-dark);transform:translateY(-2px);box-shadow:0 12px 40px rgba(212,25,32,.4)}
+.footer{position:relative;z-index:1;padding:60px 48px 40px;background:var(--dark);border-top:1px solid rgba(255,255,255,.05)}
+.footer-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px}
+.footer-brand{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px}
+.footer-brand span{color:var(--red)}
+.footer-tag{font-size:13px;color:var(--gray);margin-top:8px;line-height:1.6}
+.footer-col-title{font-size:11px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gray);margin-bottom:16px}
+.footer-links{list-style:none}
+.footer-links li{margin-bottom:10px}
+.footer-links a{font-size:13px;color:var(--gray);text-decoration:none;transition:color .3s}
+.footer-links a:hover{color:var(--white)}
+.footer-bottom{max-width:1200px;margin:40px auto 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;font-size:12px;color:var(--gray)}
+@media(max-width:768px){
+.nav{padding:0 24px}.nav-links{display:none}
+.section{padding:80px 24px}
+.phil-grid{grid-template-columns:1fr;gap:40px}
+.svc-item{grid-template-columns:1fr;gap:12px}.svc-num{display:none}
+.stats{padding:60px 24px}.stats-grid{grid-template-columns:repeat(2,1fr);gap:32px}
+.about-grid{grid-template-columns:1fr;gap:40px}
+.footer-inner{grid-template-columns:1fr;gap:32px}
+.footer-bottom{flex-direction:column;gap:12px;text-align:center}
+.cta{padding:100px 24px}
+.hero-cta-wrap{flex-direction:column;align-items:center}
+.cursor-dot,.cursor-ring{display:none}
+body{cursor:auto}
+}
+</style>
+</head>
+<body>
+<div class="cursor-dot" id="cursorDot"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<div class="grain"></div>
+<canvas id="three-canvas"></canvas>
+<nav class="nav" id="nav"><a href="#" class="nav-logo"><span>ENGINE</span> GROUP</a><div class="nav-links"><a href="#philosophy">Philosophy</a><a href="#services">Services</a><a href="#about">About</a><a href="#contact" class="nav-cta">お問い合わせ</a></div></nav>
+<section class="hero" id="hero"><div class="hero-line" id="heroLine"></div><div class="hero-glow"></div><div class="hero-content"><p class="hero-overline" id="heroOverline">福祉 × 芸能 × 学び × ビジネス</p><div class="hero-title-wrap"><h1 class="hero-title" id="heroTitle">ENGINE</h1></div><p class="hero-subtitle" id="heroSub">Group Corporation</p><p class="hero-tagline" id="heroTag">ワクワク！を実現する。</p><div class="hero-cta-wrap" id="heroCta"><a href="#services" class="hero-btn hero-btn-primary">事業を見る</a><a href="#philosophy" class="hero-btn hero-btn-outline">私たちについて</a></div></div><div class="scroll-indicator" id="scrollInd"><span>Scroll</span><div class="scroll-line"></div></div></section>
+<section class="section philosophy" id="philosophy"><div class="section-inner"><div class="phil-grid"><div class="anim-reveal"><p class="section-label">Philosophy</p><h2 class="section-title">代表の想い</h2></div><div class="anim-reveal"><p class="phil-quote">「すべての人に、ワクワクする未来を届けたい。」<br><br>福祉・芸能・教育・ビジネス——一見バラバラに見えるこれらの事業は、すべて「人の可能性を信じ、引き出す」という一本の軸で貫かれています。<br><br>誰もが自分らしく輝ける社会をつくること。それがENGINE GROUPの存在意義です。</p><div class="phil-author"><div class="phil-icon">G</div><div><div class="phil-name">後藤 靖裕</div><div class="phil-role">代表取締役</div></div></div></div></div></div></section>
+<section class="section services" id="services"><div class="section-inner"><div class="anim-reveal"><p class="section-label">Services</p><h2 class="section-title">4つの事業</h2></div><div class="svc-list"><div class="svc-item anim-reveal"><div class="svc-num">01</div><div><div class="svc-title">enzine room</div><div class="svc-sub">福祉事業</div></div><div><p class="svc-desc">障がいのある方が、その人らしく働き・暮らせる環境を創ります。就労継続支援B型・グループホーム運営を通じて、個々の可能性を最大化します。</p><div class="svc-tags"><span class="svc-tag">就労継続支援B型</span><span class="svc-tag">グループホーム</span><span class="svc-tag">生活支援</span></div></div></div><div class="svc-item anim-reveal"><div class="svc-num">02</div><div><div class="svc-title">enzine promotion</div><div class="svc-sub">芸能事業</div></div><div><p class="svc-desc">タレント・アーティストのマネジメントから、イベント企画・制作まで。エンターテインメントの力で人々に感動と活力を届けます。</p><div class="svc-tags"><span class="svc-tag">タレントマネジメント</span><span class="svc-tag">イベント企画</span><span class="svc-tag">メディア制作</span></div></div></div><div class="svc-item anim-reveal"><div class="svc-num">03</div><div><div class="svc-title">オンラインスクール</div><div class="svc-sub">教育事業</div></div><div><p class="svc-desc">場所を選ばず、誰もが学べる環境を。プログラミングからビジネススキルまで、実践的なカリキュラムで未来のリーダーを育成します。</p><div class="svc-tags"><span class="svc-tag">eラーニング</span><span class="svc-tag">スキルアップ</span><span class="svc-tag">キャリア支援</span></div></div></div><div class="svc-item anim-reveal"><div class="svc-num">04</div><div><div class="svc-title">enzine business support</div><div class="svc-sub">ビジネス支援事業</div></div><div><p class="svc-desc">中小企業・スタートアップの成長を多角的にサポート。経営コンサルティング、IT導入支援、業務効率化を通じて、持続可能な成長を実現します。</p><div class="svc-tags"><span class="svc-tag">経営コンサル</span><span class="svc-tag">IT導入支援</span><span class="svc-tag">業務効率化</span></div></div></div></div></div></section>
+<section class="stats" id="stats"><div class="stats-grid"><div class="anim-reveal"><div class="stat-val" data-target="4">0</div><div class="stat-lbl">事業領域</div></div><div class="anim-reveal"><div class="stat-val" data-target="150" data-suf="+">0<em>+</em></div><div class="stat-lbl">支援実績</div></div><div class="anim-reveal"><div class="stat-val" data-target="98" data-suf="%">0<em>%</em></div><div class="stat-lbl">利用者満足度</div></div><div class="anim-reveal"><div class="stat-val" data-target="12" data-suf="年">0<em>年</em></div><div class="stat-lbl">設立からの歩み</div></div></div></section>
+<section class="section about" id="about"><div class="section-inner"><div class="about-grid"><div class="about-img anim-reveal"><img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=700&h=900&fit=crop&q=80" alt="Team"></div><div class="anim-reveal"><p class="section-label">About Us</p><h2 class="section-title">企業情報</h2><div><div class="about-row"><div class="about-key">会社名</div><div class="about-val">株式会社 ENGINE</div></div><div class="about-row"><div class="about-key">代表者</div><div class="about-val">代表取締役 後藤 靖裕</div></div><div class="about-row"><div class="about-key">設立</div><div class="about-val">2014年</div></div><div class="about-row"><div class="about-key">事業</div><div class="about-val">福祉事業 / 芸能プロモーション / オンライン教育 / ビジネス支援</div></div><div class="about-row"><div class="about-key">ビジョン</div><div class="about-val">すべての人が自分らしく輝ける社会の実現</div></div></div></div></div></div></section>
+<section class="cta" id="contact"><div class="cta-bg"></div><div class="cta-content anim-reveal"><p class="section-label">Contact</p><h2 class="cta-title">一緒に、ワクワクする<br>未来を創りませんか。</h2><p class="cta-desc">事業に関するご質問、パートナーシップのご相談、採用に関するお問い合わせなど、お気軽にご連絡ください。</p><a href="mailto:info@enzine.net" class="cta-btn">お問い合わせはこちら</a></div></section>
+<footer class="footer"><div class="footer-inner"><div><div class="footer-brand"><span>ENGINE</span> GROUP</div><p class="footer-tag">ワクワク！を実現する。<br>福祉×芸能×学び×ビジネス</p></div><div><div class="footer-col-title">事業</div><ul class="footer-links"><li><a href="#services">enzine room</a></li><li><a href="#services">enzine promotion</a></li><li><a href="#services">オンラインスクール</a></li><li><a href="#services">business support</a></li></ul></div><div><div class="footer-col-title">会社情報</div><ul class="footer-links"><li><a href="#philosophy">企業理念</a></li><li><a href="#about">企業情報</a></li><li><a href="#contact">お問い合わせ</a></li><li><a href="https://www.enzine.net/" target="_blank">www.enzine.net</a></li></ul></div></div><div class="footer-bottom"><span>&copy; 2026 ENGINE GROUP. All rights reserved.</span><span>プライバシーポリシー | 利用規約</span></div></footer>
+<script>
+(function(){var c=document.getElementById('three-canvas'),s=new THREE.Scene(),cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,1e3);cam.position.z=5;var r=new THREE.WebGLRenderer({canvas:c,alpha:!0,antialias:!0});r.setSize(innerWidth,innerHeight);r.setPixelRatio(Math.min(devicePixelRatio,2));var ig=new THREE.IcosahedronGeometry(2.2,1),im=new THREE.MeshBasicMaterial({color:0xD41920,wireframe:!0,transparent:!0,opacity:.12}),ico=new THREE.Mesh(ig,im);s.add(ico);var og=new THREE.OctahedronGeometry(1.2,0),om=new THREE.MeshBasicMaterial({color:0xD41920,wireframe:!0,transparent:!0,opacity:.08}),oct=new THREE.Mesh(og,om);s.add(oct);var pc=600,pos=new Float32Array(pc*3);for(var i=0;i<pc*3;i++)pos[i]=(Math.random()-.5)*12;var pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));var pm=new THREE.PointsMaterial({color:0xD41920,size:.015,transparent:!0,opacity:.6}),pts=new THREE.Points(pg,pm);s.add(pts);var rg=new THREE.TorusGeometry(3,.008,16,100),rm=new THREE.MeshBasicMaterial({color:0xD41920,transparent:!0,opacity:.15}),ring=new THREE.Mesh(rg,rm);ring.rotation.x=Math.PI*.5;s.add(ring);var mx=0,my=0;document.addEventListener('mousemove',function(e){mx=(e.clientX/innerWidth-.5)*2;my=(e.clientY/innerHeight-.5)*2});(function a(){requestAnimationFrame(a);var t=Date.now()*.001;ico.rotation.x=t*.15+my*.3;ico.rotation.y=t*.1+mx*.3;oct.rotation.x=-t*.2+my*.2;oct.rotation.y=-t*.15+mx*.2;ring.rotation.z=t*.05;ring.rotation.x=Math.PI*.5+Math.sin(t*.3)*.1;pts.rotation.y=t*.02;pts.rotation.x=t*.01;var sr=Math.min(scrollY/(innerHeight*.8),1);im.opacity=.12*(1-sr*.7);om.opacity=.08*(1-sr*.7);pm.opacity=.6*(1-sr*.5);rm.opacity=.15*(1-sr*.7);r.render(s,cam)})();addEventListener('resize',function(){cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();r.setSize(innerWidth,innerHeight)})})();
+(function(){var d=document.getElementById('cursorDot'),rn=document.getElementById('cursorRing'),cx=0,cy=0,rx=0,ry=0;document.addEventListener('mousemove',function(e){cx=e.clientX;cy=e.clientY});(function l(){rx+=(cx-rx)*.15;ry+=(cy-ry)*.15;d.style.transform='translate('+(cx-4)+'px,'+(cy-4)+'px)';rn.style.transform='translate('+(rx-20)+'px,'+(ry-20)+'px)';requestAnimationFrame(l)})()})();
+gsap.registerPlugin(ScrollTrigger);addEventListener('scroll',function(){document.getElementById('nav').classList.toggle('scrolled',scrollY>60)},{passive:!0});gsap.set('#heroTitle',{opacity:0,y:60,scale:.95});gsap.set('#heroOverline,#heroSub,#heroTag,#heroCta',{opacity:0,y:20});gsap.set('#scrollInd',{opacity:0});var ht=gsap.timeline({delay:.3});ht.to('#heroLine',{scaleX:1,duration:1.2,ease:'power2.out'}).to('#heroOverline',{opacity:1,y:0,duration:.6,ease:'power2.out'},'-=0.6').to('#heroTitle',{opacity:1,y:0,scale:1,duration:1,ease:'power3.out'},'-=0.3').call(function(){document.getElementById('heroTitle').classList.add('glitch-active')},null,'-=0.2').to('#heroSub',{opacity:1,y:0,duration:.5,ease:'power2.out'},'-=0.5').to('#heroTag',{opacity:1,y:0,duration:.5,ease:'power2.out'},'-=0.3').to('#heroCta',{opacity:1,y:0,duration:.5,ease:'power2.out'},'-=0.2').to('#scrollInd',{opacity:1,duration:.5},'-=0.1');document.querySelectorAll('.anim-reveal').forEach(function(el,i){gsap.from(el,{scrollTrigger:{trigger:el,start:'top 85%',once:!0},opacity:0,y:40,duration:.7,delay:i%2*.15,ease:'power2.out'})});document.querySelectorAll('.stat-val[data-target]').forEach(function(el){var tgt=parseInt(el.dataset.target),suf=el.dataset.suf||'';ScrollTrigger.create({trigger:el,start:'top 80%',once:!0,onEnter:function(){var o={val:0};gsap.to(o,{val:tgt,duration:2,ease:'power3.out',onUpdate:function(){el.innerHTML=Math.round(o.val)+(suf?'<em>'+suf+'</em>':'')}})}})});document.querySelectorAll('a[href^="#"]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})})});
+</script>
+</body>
+</html>
